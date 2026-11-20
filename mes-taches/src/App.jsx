@@ -10,17 +10,24 @@ import Statistiques from './components/Statistiques'
 import Pied from './components/Pied'
 
 function App() {
-  const [taches, setTaches] = useState([])
-  const [chargement, setChargement] = useState(true)
+  const [taches, setTaches] = useState(() => {
+  const sauvegarde = localStorage.getItem('taches')
+  return sauvegarde ? JSON.parse(sauvegarde) : []
+})
+  const [chargement, setChargement] = useState(
+  () => localStorage.getItem('taches') === null,
+)
   const [erreur, setErreur] = useState(null)
   const [filtre, setFiltre] = useState('toutes')
 
   // Partie B : charger les tâches depuis public/taches.json
   useEffect(() => {
+    if (localStorage.getItem('taches') !== null) return
     let annule = false
 
     fetch('/taches.json')
       .then((reponse) => {
+        
         if (!reponse.ok) throw new Error(`Erreur HTTP ${reponse.status}`)
         return reponse.json()
       })
@@ -33,14 +40,18 @@ function App() {
       .finally(() => {
         if (!annule) setChargement(false)
       })
-
+    
     return () => {
       annule = true
     }
   }, [])
-
+  useEffect(() => {
+    if (!chargement && !erreur) {
+      localStorage.setItem('taches', JSON.stringify(taches))
+    }
+  }, [taches, chargement, erreur])
   const restantes = taches.filter((tache) => !tache.terminee).length
-
+  
   // Partie C : titre de l'onglet
   useEffect(() => {
     document.title = `(${restantes}) Mes tâches`
