@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import './App.css'
 import Entete from './components/Entete'
 import Carte from './components/Carte'
 import Compteur from './components/Compteur'
+import FormulaireAjout from './components/FormulaireAjout'
+import Filtres from './components/Filtres'
 import ListeTaches from './components/ListeTaches'
+import Statistiques from './components/Statistiques'
 import Pied from './components/Pied'
 
 const TACHES_INITIALES = [
@@ -14,6 +18,7 @@ const TACHES_INITIALES = [
 
 function App() {
   const [taches, setTaches] = useState(TACHES_INITIALES)
+  const [filtre, setFiltre] = useState('toutes')
 
   function basculerTache(id) {
     setTaches(
@@ -27,18 +32,36 @@ function App() {
     setTaches(taches.filter((tache) => tache.id !== id))
   }
 
+  function ajouterTache(titre) {
+    setTaches([...taches, { id: Date.now(), titre, terminee: false }])
+  }
+
+  // Valeur dérivée : recalculée à chaque affichage, pas de useState
+  const tachesVisibles = taches.filter((tache) => {
+    if (filtre === 'actives') return !tache.terminee
+    if (filtre === 'terminees') return tache.terminee
+    return true
+  })
+
   return (
     <div>
       <Entete titre="Mes tâches" sousTitre="Un premier projet React" />
       <Carte titre="Compteur">
         <Compteur />
       </Carte>
+      <Carte titre="Nouvelle tâche">
+        <FormulaireAjout onAjouter={ajouterTache} />
+      </Carte>
       <Carte titre="Ma liste">
+        <Filtres filtre={filtre} onChanger={setFiltre} />
         <ListeTaches
-          taches={taches}
+          taches={tachesVisibles}
           onBasculer={basculerTache}
           onSupprimer={supprimerTache}
         />
+      </Carte>
+      <Carte titre="Statistiques">
+        <Statistiques taches={taches} />
       </Carte>
       <Pied auteur="Imane Mourhiya" />
     </div>
